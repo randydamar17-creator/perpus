@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin - Kelola Perpustakaan</title>
+  <style>
+    
+  :root {
+    --primary: #8B5E3C;      
+    --primary-dark: #6B462C;
+    --secondary: #C89F7B;   
+    --light: #f6f1e9;        
+    --dark: #3e2f24;         
+    --gray: #8c7f75;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Georgia", serif;
+  }
+
+  body {
+    background: #f2e9d8;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 230px;
+    background: var(--dark);
+    color: white;
+    padding: 20px 0;
+    box-shadow: 4px 0 10px rgba(0,0,0,0.2);
+  }
+
+  .sidebar-header h2 {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #7a6758;
+  }
+
+  .sidebar-menu a {
+    display: block;
+    color: #e7d7c9;
+    padding: 12px 20px;
+    text-decoration: none;
+    transition: 0.2s;
+  }
+
+  .sidebar-menu a:hover,
+  .sidebar-menu a.active {
+    background: #5c4637;
+    color: white;
+  }
+
+  .main-content {
+    flex: 1;
+    padding: 20px;
+  }
+
+  .card {
+    background: var(--light);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid #d4c4b5;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+
+  input, textarea, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    background: #fffaf3;
+    border: 1px solid #cdb9a7;
+  }
+
+  button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-dark);
+  }
+
+  .btn-danger {
+    background: #b83b2a;
+    color: white;
+  }
+
+  .btn-success {
+    background: #2e7d32;
+    color: white;
+  }
+
+  .btn-warning {
+    background: #ed6c02;
+    color: white;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  th {
+    background: #e7d5c4;
+    padding: 12px;
+    text-align: left;
+  }
+
+  td {
+    padding: 12px;
+    border-bottom: 1px solid #e6d9c9;
+    vertical-align: middle;
+  }
+
+  .page {
+    display: none;
+  }
+
+  .page.active {
+    display: block;
+  }
+
+  .cover-img {
+    width: 55px;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid #ccbbaa;
+  }
+
+  .loan-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: bold;
+    display: inline-block;
+  }
+
+  .status-active {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  .status-overdue {
+    background: #ffebee;
+    color: #c62828;
+  }
+
+  .status-returned {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+  }
+
+  .loan-details {
+    background: #f9f5f0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-left: 4px solid var(--primary);
+  }
+
+  .loan-details h4 {
+    margin-bottom: 10px;
+    color: var(--dark);
+  }
+
+  .loan-details p {
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .loan-details span:first-child {
+    font-weight: bold;
+    color: #5d4037;
+  }
+
+  .loan-details span:last-child {
+    color: #795548;
+  }
+  /* Tombol Logout kiri bawah */
+.logout-box {
+  position: fixed;
+  bottom: 15px;
+  left: 15px;
+  background: var(--danger);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: .2s;
+  z-index: 9999;
+}
+.logout-box:hover {
+  background: #b91c1c;
+  transform: translateY(-2px);
+}
+
+
+  </style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-header">
+    <h2>Admin Panel</h2>
+  </div>
+  <ul class="sidebar-menu">
+    <li><a href="#" class="active" onclick="showPage('books')">📚 Kelola Buku</a></li>
+    <li><a href="#" onclick="showPage('loans')">📋 Daftar Peminjaman</a></li>
+    <li><a href="#" onclick="showPage('stats')">📊 Statistik</a></li>
+  </ul>
+</div>
+
+<div class="main-content">
+
+  <!-- HALAMAN TAMBAH BUKU -->
+  <div id="books" class="page active">
+    <div class="card">
+      <h2>Tambah Buku Baru</h2>
+
+      <input type="text" id="title" placeholder="Judul Buku">
+      <input type="text" id="author" placeholder="Nama Penulis">
+      <input type="text" id="isbn" placeholder="ISBN">
+      <input type="number" id="stock" placeholder="Stok Buku" min="0">
+      <input type="text" id="cover" placeholder="Link Foto Sampul (URL)">
+      <textarea id="description" placeholder="Deskripsi Buku..." rows="4"></textarea>
+
+      <button class="btn-primary" onclick="addBook()">➕ Tambah Buku</button>
+    </div>
+
+    <div class="card">
+      <h2>Daftar Buku</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Sampul</th>
+            <th>Judul</th>
+            <th>Penulis</th>
+            <th>ISBN</th>
+            <th>Stok</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="bookTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- HALAMAN PEMINJAMAN -->
+  <div id="loans" class="page">
+    <div class="card">
+      <h2>📋 Daftar Peminjaman</h2>
+      <div class="action-buttons" style="margin-bottom: 15px;">
+        <button class="btn-primary" onclick="renderLoans('all')">📖 Semua</button>
+        <button class="btn-warning" onclick="renderLoans('active')">⏳ Aktif</button>
+        <button class="btn-danger" onclick="renderLoans('overdue')">⚠️ Terlambat</button>
+        <button class="btn-success" onclick="renderLoans('returned')">✅ Dikembalikan</button>
+      </div>
+      
+      <div id="loanStats" style="margin-bottom: 20px; padding: 10px; background: #f5efe6; border-radius: 8px;">
+        <strong>📊 Statistik Peminjaman:</strong> 
+        <span id="statsText">Memuat...</span>
+      </div>
+      
+      <div id="loanList"></div>
+    </div>
+  </div>
+
+  <!-- HALAMAN STATISTIK -->
+  <div id="stats" class="page">
+    <div class="card">
+      <h2>📊 Statistik Perpustakaan</h2>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h3 style="color: var(--primary); margin-bottom: 15px;">📚 Data Buku</h3>
+          <p><strong>Total Buku:</strong> <span id="statTotalBooks">0</span></p>
+          <p><strong>Buku Tersedia:</strong> <span id="statAvailableBooks">0</span></p>
+          <p><strong>Buku Dipinjam:</strong> <span id="statBorrowedBooks">0</span></p>
+          <p><strong>Buku Habis Stok:</strong> <span id="statOutOfStock">0</span></p>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h3 style="color: var(--primary); margin-bottom: 15px;">👥 Data Peminjaman</h3>
+          <p><strong>Total Peminjaman:</strong> <span id="statTotalLoans">0</span></p>
+          <p><strong>Peminjaman Aktif:</strong> <span id="statActiveLoans">0</span></p>
+          <p><strong>Terlambat Kembali:</strong> <span id="statOverdueLoans">0</span></p>
+          <p><strong>Sudah Dikembalikan:</strong> <span id="statReturnedLoans">0</span></p>
+        </div>
+        
+        <div style="background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h3 style="color: var(--primary); margin-bottom: 15px;">📈 Aktivitas Terbaru</h3>
+          <div id="recentActivity" style="font-size: 14px; line-height: 1.6;">
+            <p>Memuat aktivitas...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+
+  document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  // Jika membuka halaman statistik, perbarui data
+  if (id === 'stats') {
+    updateStatistics();
+  }
+}
+
+function getBooks() {
+  return JSON.parse(localStorage.getItem('books')) || [];
+}
+
+function saveBooks(data) {
+  localStorage.setItem('books', JSON.stringify(data));
+}
+
+function addBook() {
+  const title = titleInput.value.trim();
+  const author = authorInput.value.trim();
+  const isbn = isbnInput.value.trim();
+  const stock = parseInt(stockInput.value) || 0;
+  const description = descInput.value.trim();
+  const cover = coverInput.value.trim();
+
+  if (!title || !author || !isbn || !description) {
+    alert("Judul, Penulis, ISBN, dan Deskripsi harus diisi!");
+    return;
+  }
+
+  if (isNaN(stock) || stock < 0) {
+    alert("Stok harus berupa angka positif!");
+    return;
+  }
+
+  const books = getBooks();
+  books.push({
+    id: Date.now(),
+    title,
+    author,
+    isbn,
+    stock,
+    description,
+    cover
+  });
+
+  saveBooks(books);
+  renderBooks();
+  alert("Buku berhasil ditambahkan!");
+
+  // Reset form
+  titleInput.value = "";
+  authorInput.value = "";
+  isbnInput.value = "";
+  stockInput.value = "";
+  descInput.value = "";
+  coverInput.value = "";
+}
+
+function renderBooks() {
+  const books = getBooks();
+  const tbody = document.getElementById("bookTable");
+
+  tbody.innerHTML = "";
+
+  books.forEach((b, i) => {
+    tbody.innerHTML += `
+      <tr>
+        <td>
+          ${b.cover ? `<img src="${b.cover}" class="cover-img" onerror="this.style.display='none';">` : `-`}
+        </td>
+        <td><strong>${escapeHtml(b.title)}</strong><br>
+            <small style="color: var(--gray);">${b.description.substring(0, 60)}${b.description.length > 60 ? '...' : ''}</small>
+        </td>
+        <td>${escapeHtml(b.author)}</td>
+        <td><code>${escapeHtml(b.isbn)}</code></td>
+        <td>
+          ${b.stock > 0 ? 
+            `<span style="color: green; font-weight: bold;">${b.stock}</span>` : 
+            `<span style="color: red; font-weight: bold;">Habis</span>`}
+        </td>
+        <td>
+          <button class="btn-danger" onclick="deleteBook(${i})">🗑️ Hapus</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function deleteBook(i) {
+  if (confirm("Apakah Anda yakin ingin menghapus buku ini?")) {
+    const books = getBooks();
+    books.splice(i, 1);
+    saveBooks(books);
+    renderBooks();
+    alert("Buku berhasil dihapus!");
+  }
+}
+
+function getLoans() {
+  return JSON.parse(localStorage.getItem('loans')) || [];
+}
+
+function saveLoans(data) {
+  localStorage.setItem('loans', JSON.stringify(data));
+}
+
+function renderLoans(filter = 'all') {
+  const loans = getLoans();
+  const list = document.getElementById('loanList');
+  
+  if (loans.length === 0) {
+    list.innerHTML = `
+      <div style="text-align: center; padding: 30px; color: var(--gray);">
+        <p style="font-size: 18px;">📭 Belum ada peminjaman.</p>
+        <p>Data peminjaman akan muncul di sini ketika mahasiswa meminjam buku dari halaman perpustakaan.</p>
+      </div>
+    `;
+    updateLoanStats(loans);
+    return;
+  }
+  
+  // Filter loans berdasarkan status
+  let filteredLoans = loans;
+  const today = new Date();
+  
+  if (filter === 'active') {
+    filteredLoans = loans.filter(l => !l.returned && new Date(l.dueDate) >= today);
+  } else if (filter === 'overdue') {
+    filteredLoans = loans.filter(l => !l.returned && new Date(l.dueDate) < today);
+  } else if (filter === 'returned') {
+    filteredLoans = loans.filter(l => l.returned);
+  }
+  
+  // Update statistik filter
+  updateLoanStats(filteredLoans, filter);
+  
+  if (filteredLoans.length === 0) {
+    list.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: var(--gray);">
+        <p>Tidak ada peminjaman dengan filter "${filter}".</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Urutkan berdasarkan tanggal pinjam (terbaru dulu)
+  filteredLoans.sort((a, b) => new Date(b.borrowDate) - new Date(a.borrowDate));
+  
+  list.innerHTML = filteredLoans.map((l, index) => {
+    const dueDate = new Date(l.dueDate);
+    const isOverdue = !l.returned && dueDate < today;
+    const isActive = !l.returned && dueDate >= today;
+    
+    let statusClass = 'status-returned';
+    let statusText = '✅ Dikembalikan';
+    
+    if (isOverdue) {
+      statusClass = 'status-overdue';
+      const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
+      statusText = `⚠️ Terlambat ${daysOverdue} hari`;
+    } else if (isActive) {
+      statusClass = 'status-active';
+      const daysLeft = Math.floor((dueDate - today) / (1000 * 60 * 60 * 24));
+      statusText = `⏳ ${daysLeft} hari lagi`;
+    }
+    
+    return `
+      <div class="loan-details">
+        <h4>${escapeHtml(l.title)}</h4>
+        <p>
+          <span>📅 Status:</span>
+          <span class="loan-status ${statusClass}">${statusText}</span>
+        </p>
+        <p><span>👤 Peminjam:</span> <span>${escapeHtml(l.borrower)} (${escapeHtml(l.npm)})</span></p>
+        <p><span>🎓 Jurusan:</span> <span>${escapeHtml(l.dept)}</span></p>
+        <p><span>⚤ Jenis Kelamin:</span> <span>${escapeHtml(l.gender)}</span></p>
+        <p><span>📱 WhatsApp:</span> <span><a href="https://wa.me/${l.wa.replace(/[^\d]/g, '')}" target="_blank">${escapeHtml(l.wa)}</a></span></p>
+        <p><span>📅 Tanggal Pinjam:</span> <span>${formatDate(l.borrowDate)}</span></p>
+        <p><span>⏰ Jatuh Tempo:</span> <span>${formatDate(l.dueDate)}</span></p>
+        <p><span>🆔 ID Peminjaman:</span> <span><code>${l.id}</code></span></p>
+        
+        <div class="action-buttons" style="margin-top: 15px;">
+          ${!l.returned ? `
+            <button class="btn-success" onclick="markAsReturned(${index}, '${filter}')">✅ Tandai Dikembalikan</button>
+            ${isOverdue ? `<button class="btn-warning" onclick="sendReminder(${index})">📱 Kirim Pengingat</button>` : ''}
+          ` : ''}
+          <button class="btn-danger" onclick="deleteLoan(${index}, '${filter}')">🗑️ Hapus</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateLoanStats(loans, filter = 'all') {
+  const totalLoans = getLoans().length;
+  const activeLoans = getLoans().filter(l => !l.returned && new Date(l.dueDate) >= new Date()).length;
+  const overdueLoans = getLoans().filter(l => !l.returned && new Date(l.dueDate) < new Date()).length;
+  const returnedLoans = getLoans().filter(l => l.returned).length;
+  
+  const filterText = filter === 'all' ? 'Semua' : 
+                    filter === 'active' ? 'Aktif' : 
+                    filter === 'overdue' ? 'Terlambat' : 'Dikembalikan';
+  
+  document.getElementById('statsText').innerHTML = `
+    Total: ${totalLoans} | Aktif: ${activeLoans} | Terlambat: ${overdueLoans} | Dikembalikan: ${returnedLoans}
+    | Filter: ${filterText} (${loans.length})
+  `;
+}
+
+function updateStatistics() {
+  const books = getBooks();
+  const loans = getLoans();
+  
+  // Statistik Buku
+  document.getElementById('statTotalBooks').textContent = books.length;
+  document.getElementById('statAvailableBooks').textContent = books.filter(b => b.stock > 0).length;
+  document.getElementById('statBorrowedBooks').textContent = loans.filter(l => !l.returned).length;
+  document.getElementById('statOutOfStock').textContent = books.filter(b => b.stock === 0).length;
+  
+  // Statistik Peminjaman
+  document.getElementById('statTotalLoans').textContent = loans.length;
+  document.getElementById('statActiveLoans').textContent = loans.filter(l => !l.returned && new Date(l.dueDate) >= new Date()).length;
+  document.getElementById('statOverdueLoans').textContent = loans.filter(l => !l.returned && new Date(l.dueDate) < new Date()).length;
+  document.getElementById('statReturnedLoans').textContent = loans.filter(l => l.returned).length;
+  
+  // Aktivitas Terbaru
+  const recentLoans = [...loans].sort((a, b) => new Date(b.borrowDate) - new Date(a.borrowDate)).slice(0, 5);
+  const recentActivity = document.getElementById('recentActivity');
+  
+  if (recentLoans.length === 0) {
+    recentActivity.innerHTML = '<p>Belum ada aktivitas peminjaman.</p>';
+  } else {
+    recentActivity.innerHTML = recentLoans.map(l => `
+      <p style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+        <strong>${formatDate(l.borrowDate)}</strong><br>
+        ${escapeHtml(l.borrower)} meminjam "${escapeHtml(l.title)}"<br>
+        <small>Status: ${l.returned ? '✅ Dikembalikan' : (new Date(l.dueDate) < new Date() ? '⚠️ Terlambat' : '⏳ Aktif')}</small>
+      </p>
+    `).join('');
+  }
+}
+
+function markAsReturned(index, filter) {
+  const loans = getLoans();
+  if (index >= 0 && index < loans.length) {
+    // Tandai sebagai dikembalikan
+    loans[index].returned = true;
+    loans[index].returnDate = new Date().toISOString().split('T')[0];
+    
+    // Tambah stok buku yang dikembalikan
+    const books = getBooks();
+    const bookIndex = books.findIndex(b => b.id === loans[index].bookId);
+    if (bookIndex !== -1) {
+      books[bookIndex].stock += 1;
+      saveBooks(books);
+    }
+    
+    saveLoans(loans);
+    renderLoans(filter);
+    alert("Buku berhasil ditandai sebagai dikembalikan!");
+  }
+}
+
+function sendReminder(index) {
+  const loans = getLoans();
+  if (index >= 0 && index < loans.length) {
+    const loan = loans[index];
+    const phone = loan.wa.replace(/[^\d]/g, '');
+    const message = `Halo ${loan.borrower}! Pengingat: Buku "${loan.title}" sudah terlambat. Segera kembalikan ke perpustakaan.`;
+    
+    // Buka WhatsApp dengan pesan pengingat
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    alert(`Membuka WhatsApp untuk mengirim pengingat kepada ${loan.borrower}`);
+  }
+}
+
+function deleteLoan(index, filter) {
+  if (confirm("Apakah Anda yakin ingin menghapus data peminjaman ini?")) {
+    const loans = getLoans();
+    
+    // Jika belum dikembalikan, tambah stok buku
+    if (!loans[index].returned) {
+      const books = getBooks();
+      const bookIndex = books.findIndex(b => b.id === loans[index].bookId);
+      if (bookIndex !== -1) {
+        books[bookIndex].stock += 1;
+        saveBooks(books);
+      }
+    }
+    
+    loans.splice(index, 1);
+    saveLoans(loans);
+    renderLoans(filter);
+    alert("Data peminjaman berhasil dihapus!");
+  }
+}
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('id-ID', {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+// Referensi input
+const titleInput = document.getElementById("title");
+const authorInput = document.getElementById("author");
+const isbnInput = document.getElementById("isbn");
+const stockInput = document.getElementById("stock");
+const descInput = document.getElementById("description");
+const coverInput = document.getElementById("cover");
+
+// Inisialisasi
+renderBooks();
+renderLoans();
+
+// Auto-refresh daftar peminjaman setiap 30 detik
+setInterval(() => {
+  if (document.getElementById('loans').classList.contains('active')) {
+    const currentFilter = document.querySelector('.btn-primary[onclick*="renderLoans"]') ? 'all' : 
+                         document.querySelector('.btn-warning[onclick*="renderLoans(\'active\')"]') ? 'active' :
+                         document.querySelector('.btn-danger[onclick*="renderLoans(\'overdue\')"]') ? 'overdue' :
+                         document.querySelector('.btn-success[onclick*="renderLoans(\'returned\')"]') ? 'returned' : 'all';
+    renderLoans(currentFilter);
+  }
+}, 30000);
+function logoutSystem(){
+  if(confirm("Yakin ingin logout?")){
+    // Jika sistemmu memakai login sederhana pakai localStorage:
+    localStorage.removeItem("loggedIn");
+    window.location.href = "index.html"; // arahkan ke halaman login kamu
+  }
+}
+
+</script>
+<div class="logout-box" onclick="logoutSystem()">
+  <i class="fas fa-sign-out-alt"></i> Logout
+</div>
+
+</body>
+</html>
