@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sistem Peminjaman Buku Perpustakaan Kampus</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root{
+      --primary: #3b82f6;
+      --primary-dark: #1e40af;
+      --muted: #64748b;
+      --bg: #f0f9ff;
+      --card: #fff;
+      --dark: #1e293b;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    /* Reset & base */
+    *{box-sizing:border-box;margin:0;padding:0;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+    body{background:linear-gradient(135deg,var(--bg) 0%, #e0f2fe 100%);color:var(--dark);min-height:100vh;}
+
+    /* Header */
+    header{background:linear-gradient(to right,var(--primary-dark),var(--primary));color:#fff;padding:18px 0;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+    .container{max-width:1200px;margin:0 auto;padding:0 18px}
+    .header-flex{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px}
+    .logo{display:flex;align-items:center;gap:10px}
+    .logo i{font-size:26px}
+    .logo h1{font-size:18px}
+    .search-box{padding:10px 14px;width:300px;border-radius:999px;border:none;box-shadow:0 2px 6px rgba(0,0,0,0.06);font-size:14px}
+
+    /* Buttons (simple, reusable) */
+    .btn{padding:9px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:8px;transition:transform .15s ease,box-shadow .15s ease}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:var(--primary);color:#fff}
+    .btn-primary:hover{box-shadow:0 6px 12px rgba(59,130,246,0.12)}
+    .btn-secondary{background:#f8fafc;color:var(--dark);border:1px solid #e2e8f0}
+    .btn-info{background:transparent;color:var(--muted)}
+    .btn-disabled{background:#e5e7eb;color:#9ca3af;cursor:not-allowed}
+
+    /* Layout */
+    main{padding:28px 0}
+    .grid{display:grid;grid-template-columns:2fr 1fr;gap:22px}
+    .card{background:var(--card);border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.04);transition:transform .18s ease}
+    .card:hover{transform:translateY(-4px)}
+    h2{margin-bottom:12px;color:var(--dark);font-size:18px;border-bottom:2px solid #eef2f7;padding-bottom:8px}
+    h3{margin-bottom:12px}
+
+    /* Stats */
+    .stats{display:flex;gap:12px;margin-bottom:18px}
+    .stat-card{flex:1;background:#fff;border-radius:10px;padding:12px;text-align:center;box-shadow:0 3px 8px rgba(0,0,0,0.03)}
+    .stat-card i{font-size:20px;margin-bottom:6px;color:var(--primary)}
+    .stat-value{font-size:20px;font-weight:700}
+    .stat-label{font-size:13px;color:var(--muted)}
+
+    /* Books list */
+    .books{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+    .book{display:flex;gap:12px;padding:12px;border-radius:10px;background:#fff;border:1px solid #eef2f7;align-items:flex-start}
+    .cover{
+      width:68px;
+      height:96px;
+      border-radius:8px;
+      background:linear-gradient(135deg,#e0f2fe,#bfdbfe);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--primary-dark);
+      font-size:12px;
+      flex-shrink:0;
+      box-shadow:0 4px 8px rgba(2,6,23,0.04);
+      overflow:hidden;
+    }
+    .cover img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:8px;
+    }
+    .book h4{margin-bottom:6px;font-size:15px}
+    .book p{font-size:13px;color:var(--muted);margin-bottom:4px}
+    .badge{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:700}
+    .available{background:#d1fae5;color:#065f46}
+    .borrowed{background:#fee2e2;color:#991b1b}
+    .book-actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+    .book-buttons{display:flex;gap:8px}
+
+    /* Book detail inside modal */
+    .book-detail{margin-top:12px;padding:12px;background:#f8fafc;border-radius:8px;line-height:1.6;color:var(--muted)}
+
+    /* Modal (simplified and compact) */
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:1000}
+    .modal-content{background:#fff;padding:20px;border-radius:12px;width:100%;max-width:520px;box-shadow:0 18px 30px rgba(2,6,23,0.2)}
+    .modal-wide{max-width:720px}
+    .form-group{margin-bottom:12px}
+    label{display:block;margin-bottom:6px;font-weight:600;color:var(--dark);font-size:13px}
+    input[type="text"], input[type="date"], input[type="number"], select{width:100%;padding:10px;border-radius:8px;border:1px solid #e6edf6;font-size:14px}
+    /* modal-form scroll simplified */
+    .modal-form-container{max-height:60vh;overflow:auto;padding-right:6px}
+
+    /* Responsive tweaks */
+    @media (max-width:768px){
+      .grid{grid-template-columns:1fr}
+      .header-flex{flex-direction:column;align-items:flex-start}
+      .search-box{width:100%}
+      .books{grid-template-columns:1fr}
+      .stats{flex-direction:column}
+    }
+    /* Tombol Logout Mengambang */
+.logout-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--danger);
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  transition: .2s;
+}
+.logout-btn:hover{
+  background: #b91c1c;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.2);
+}
+
+  </style>
+</head>
+<body>
+<header>
+  <div class="container header-flex">
+    <div class="logo">
+      <i class="fas fa-book-open"></i>
+      <div>
+        <h1>Perpustakaan Kampus</h1>
+        <p style="font-size:13px;opacity:.9">Sistem Peminjaman Buku</p>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px">
+      <input id="search" type="text" class="search-box" placeholder="Cari judul / penulis / ISBN..." />
+      <button id="filterBtn" class="btn btn-secondary"><i class="fas fa-filter"></i> <span>Semua Buku</span></button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <div class="stats">
+      <div class="stat-card">
+        <i class="fas fa-book"></i>
+        <div class="stat-value" id="totalBooks">0</div>
+        <div class="stat-label">Total Buku</div>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-check-circle"></i>
+        <div class="stat-value" id="availableBooks">0</div>
+        <div class="stat-label">Tersedia</div>
+      </div>
+      <div class="stat-card">
+        <i class="fas fa-users"></i>
+        <div class="stat-value" id="totalLoans">0</div>
+        <div class="stat-label">Dipinjam</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: Katalog -->
+      <div class="card">
+        <h2><i class="fas fa-list"></i> Katalog Buku</h2>
+        <div id="bookList" class="books"></div>
+      </div>
+
+      <!-- Right: Info & Pengumuman -->
+      <div>
+        <div class="card" style="margin-bottom:16px">
+          <h3><i class="fas fa-info-circle"></i> Info Perpustakaan</h3>
+          <p style="margin-bottom:6px"><i class="fas fa-clock"></i> Jam buka: Senin - Jumat, 08:00 - 16:00</p>
+          <p style="margin-bottom:6px"><i class="fas fa-map-marker-alt"></i> Lokasi: Gedung Perpustakaan Lantai 1</p>
+          <p style="margin-bottom:6px"><i class="fas fa-phone"></i> Telepon: <a href="tel:085792789177">085792789177</a></p>
+          <p style="margin-bottom:6px"><a href="https://www.facebook.com/leonard.damar" target="_blank"><i class="fab fa-facebook"></i> Facebook: Ard Da</a></p>
+          <p><a href="https://www.instagram.com/leodamar_11" target="_blank"><i class="fab fa-instagram"></i> Instagram: leodamar_11</a></p>
+        </div>
+
+        <div class="card">
+          <h3><i class="fas fa-bullhorn"></i> Pengumuman</h3>
+          <p>• Masa pengembalian buku maksimal 7 hari</p>
+          <p>• Denda keterlambatan Rp 2.000/hari</p>
+          <p>• Buku referensi tidak dapat dipinjam</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Modal Pinjam -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <h3 id="modalTitle"><i class="fas fa-book"></i> Pinjam Buku</h3>
+    <div id="error" style="display:none;margin-top:8px;padding:10px;background:#fff1f1;border-left:4px solid var(--danger);color:var(--danger);border-radius:6px"></div>
+    <div class="modal-form-container" style="margin-top:12px">
+      <div class="form-group">
+        <label>Nama Peminjam</label>
+        <input id="borrowerName" type="text" />
+      </div>
+      <div class="form-group">
+        <label>NPM</label>
+        <input id="borrowerNpm" type="text" />
+      </div>
+      <div class="form-group">
+        <label>Jurusan</label>
+        <input id="borrowerDept" type="text" />
+      </div>
+      <div class="form-group">
+        <label>Jenis Kelamin</label>
+        <select id="borrowerGender">
+          <option value="">-- Pilih Jenis Kelamin --</option>
+          <option value="Laki-laki">Laki-laki</option>
+          <option value="Perempuan">Perempuan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>No WhatsApp</label>
+        <input id="borrowerWa" type="text" />
+      </div>
+      <div class="form-group">
+        <label>Tanggal Peminjaman</label>
+        <input id="borrowDate" type="date" />
+      </div>
+      <div class="form-group">
+        <label>Durasi (hari)</label>
+        <input id="borrowDays" type="number" value="7" min="1" />
+      </div>
+    </div>
+
+    <div style="text-align:right;margin-top:14px">
+      <button class="btn btn-secondary" onclick="closeModal()"><i class="fas fa-times"></i> Batal</button>
+      <button class="btn btn-primary" onclick="confirmBorrow()"><i class="fas fa-check"></i> Konfirmasi</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Detail -->
+<div id="detailModal" class="modal">
+  <div class="modal-content modal-wide">
+    <h3 id="detailTitle"><i class="fas fa-info-circle"></i> Detail Buku</h3>
+    <div id="bookDetailContent"></div>
+    <div style="text-align:right;margin-top:12px">
+      <button class="btn btn-secondary" onclick="closeDetailModal()"><i class="fas fa-times"></i> Tutup</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ---------- Data & Storage Helpers ---------- */
+  let books = [];
+  let loans = [];
+  let selectedBook = null;
+  let filterAvailable = false;
+
+  const qs = id => document.getElementById(id);
+
+  // Storage helper: get/set keys (single place)
+  const storage = {
+    get(key){ try { return JSON.parse(localStorage.getItem(key)) || []; } catch(e){ return []; } },
+    set(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+  };
+
+  /* ---------- Init DOM refs ---------- */
+  const bookList = qs('bookList');
+  const searchInput = qs('search');
+  const filterBtn = qs('filterBtn');
+  const errorBox = qs('error');
+
+  // Borrow form refs
+  const borrowerName = qs('borrowerName');
+  const borrowerNpm = qs('borrowerNpm');
+  const borrowerDept = qs('borrowerDept');
+  const borrowerGender = qs('borrowerGender');
+  const borrowerWa = qs('borrowerWa');
+  const borrowDateInput = qs('borrowDate');
+  const borrowDays = qs('borrowDays');
+
+  /* ---------- Load / Save (gabungkan) ---------- */
+  function loadAll(){
+    books = storage.get('books');
+    loans = storage.get('loans');
+    updateStats();
+  }
+  function saveAll(){
+    storage.set('books', books);
+    storage.set('loans', loans);
+    updateStats();
+  }
+
+  function updateStats(){
+    qs('totalBooks').textContent = books.length;
+    qs('availableBooks').textContent = books.filter(b => b.stock > 0).length;
+    qs('totalLoans').textContent = loans.length;
+  }
+
+  /* ---------- Render ---------- */
+  function renderBooks(){
+    const q = (searchInput.value || '').toLowerCase();
+    bookList.innerHTML = '';
+    const filtered = books.filter(b => {
+      const match = (b.title||'').toLowerCase().includes(q) ||
+                    (b.author||'').toLowerCase().includes(q) ||
+                    (b.isbn||'').toLowerCase().includes(q);
+      return filterAvailable ? match && b.stock > 0 : match;
+    });
+
+    if(filtered.length === 0){
+      bookList.innerHTML = '<p style="text-align:center;padding:18px;color:var(--muted)">Tidak ada buku ditemukan.</p>';
+      return;
+    }
+
+    filtered.forEach(book => {
+      const div = document.createElement('div');
+      div.className = 'book';
+      
+      // BUAT ELEMEN COVER YANG MENAMPILKAN GAMBAR JIKA ADA LINK
+      let coverHTML = '';
+      if (book.cover && book.cover.trim() !== '' && book.cover !== 'null') {
+        // Gunakan gambar dari link yang diberikan admin
+        coverHTML = `
+          <div class="cover">
+            <img src="${escapeHtml(book.cover)}" 
+                 alt="${escapeHtml(book.title)}"
+                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<i class=\\'fas fa-book\\' style=\\'font-size:22px\\'></i>';">
+          </div>
+        `;
+      } else {
+        // Default icon jika tidak ada gambar
+        coverHTML = '<div class="cover"><i class="fas fa-book" style="font-size:22px"></i></div>';
+      }
+      
+      div.innerHTML = `
+        ${coverHTML}
+        <div style="flex:1">
+          <h4>${escapeHtml(book.title)}</h4>
+          <p><i class="fas fa-user"></i> ${escapeHtml(book.author)}</p>
+          <p><i class="fas fa-barcode"></i> ISBN: ${escapeHtml(book.isbn)}</p>
+          <p><i class="fas fa-layer-group"></i> Stok: ${book.stock}</p>
+          <div class="book-actions">
+            <span class="badge ${book.stock > 0 ? 'available' : 'borrowed'}">
+              ${book.stock > 0 ? '<i class="fas fa-check"></i> Tersedia' : '<i class="fas fa-times"></i> Dipinjam'}
+            </span>
+            <div class="book-buttons">
+              <button class="btn btn-info" onclick="showBookDetail(${book.id})"><i class="fas fa-eye"></i> Detail</button>
+              <button class="btn ${book.stock > 0 ? 'btn-primary' : 'btn-disabled'}" ${book.stock > 0 ? '' : 'disabled'} onclick="openModal(${book.id})"><i class="fas fa-hand-holding"></i> Pinjam</button>
+            </div>
+          </div>
+        </div>
+      `;
+      bookList.appendChild(div);
+    });
+  }
+
+  /* ---------- Modal & Detail ---------- */
+  function openModal(id){
+    selectedBook = books.find(b => b.id === id);
+    if(!selectedBook) return;
+    qs('modalTitle').textContent = 'Pinjam: ' + selectedBook.title;
+    qs('modal').style.display = 'flex';
+    errorBox.style.display = 'none';
+    // set default tanggal hari ini hanya sekali saat buka modal
+    borrowDateInput.value = new Date().toISOString().split('T')[0];
+  }
+  function closeModal(){ qs('modal').style.display = 'none'; }
+
+  function showBookDetail(id){
+    const book = books.find(b => b.id === id);
+    if(!book) return;
+    qs('detailTitle').textContent = 'Detail: ' + book.title;
+    
+    // Tambahkan gambar di detail jika ada
+    let coverDetailHTML = '';
+    if (book.cover && book.cover.trim() !== '' && book.cover !== 'null') {
+      coverDetailHTML = `
+        <div style="text-align: center; margin-bottom: 12px;">
+          <img src="${escapeHtml(book.cover)}" 
+               alt="${escapeHtml(book.title)}"
+               style="max-width: 150px; max-height: 200px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); object-fit: cover;"
+               onerror="this.style.display='none';">
+        </div>
+      `;
+    }
+    
+    qs('bookDetailContent').innerHTML = `
+      ${coverDetailHTML}
+      <p><strong><i class="fas fa-user"></i> Penulis:</strong> ${escapeHtml(book.author)}</p>
+      <p><strong><i class="fas fa-barcode"></i> ISBN:</strong> ${escapeHtml(book.isbn)}</p>
+      <p><strong><i class="fas fa-layer-group"></i> Stok:</strong> ${book.stock}</p>
+      <div class="book-detail">${escapeHtml(book.description || 'Tidak ada deskripsi')}</div>
+    `;
+    qs('detailModal').style.display = 'flex';
+  }
+  
+  function closeDetailModal(){ qs('detailModal').style.display = 'none'; }
+
+  /* ---------- Borrow logic ---------- */
+  function confirmBorrow(){
+    const name = borrowerName.value.trim();
+    const npm = borrowerNpm.value.trim();
+    const dept = borrowerDept.value.trim();
+    const gender = borrowerGender.value;
+    const wa = borrowerWa.value.trim();
+    const borrowDate = borrowDateInput.value;
+    const days = parseInt(borrowDays.value) || 7;
+
+    if(!name || !npm || !dept || !gender || !wa || !borrowDate){
+      errorBox.style.display = 'block';
+      errorBox.textContent = 'Semua data harus diisi!';
+      return;
+    }
+
+    // reduce stock
+    if(selectedBook && selectedBook.stock > 0){
+      selectedBook.stock -= 1;
+    } else {
+      errorBox.style.display = 'block';
+      errorBox.textContent = 'Stok tidak mencukupi.';
+      return;
+    }
+
+    // due date
+    const due = new Date(borrowDate);
+    due.setDate(due.getDate() + days);
+
+    loans.push({
+      id: Date.now(),
+      bookId: selectedBook.id,
+      title: selectedBook.title,
+      borrower: name,
+      npm,
+      dept,
+      gender,
+      wa,
+      borrowDate,
+      dueDate: due.toISOString().split('T')[0]
+    });
+
+    saveAll();
+    closeModal();
+    renderBooks();
+    // clear form fields lightly
+    borrowerName.value=''; borrowerNpm.value=''; borrowerDept.value=''; borrowerGender.value=''; borrowerWa.value='';
+  }
+
+  /* ---------- Filter & Search ---------- */
+  filterBtn.onclick = () => {
+    filterAvailable = !filterAvailable;
+    filterBtn.innerHTML = filterAvailable ? '<i class="fas fa-filter"></i> Tersedia' : '<i class="fas fa-filter"></i> Semua Buku';
+    renderBooks();
+  };
+  searchInput.oninput = renderBooks;
+
+  /* ---------- Util ---------- */
+  function escapeHtml(str){
+    if(!str) return '';
+    return String(str)
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  /* ---------- Demo / Boot data if empty ---------- */
+  function seedIfEmpty(){
+    if(books.length === 0){
+      books = [
+        {id:1, title:'Pemrograman Dasar', author:'Budi Santoso', isbn:'978-123', stock:3, description:'Buku pengantar pemrograman untuk pemula.', cover:''},
+        {id:2, title:'Basis Data', author:'Siti Aminah', isbn:'978-456', stock:2, description:'Konsep dan aplikasi basis data.', cover:''},
+        {id:3, title:'Jaringan Komputer', author:'Andi Wijaya', isbn:'978-789', stock:0, description:'Materi jaringan dan protokol.', cover:''},
+        {id:4, title:'Struktur Data', author:'Rina Wijaya', isbn:'978-101112', stock:5, description:'Algoritma dan struktur data untuk pemula.', cover:'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=200&fit=crop'},
+        {id:5, title:'Kalkulus Lanjut', author:'Ahmad Fauzi', isbn:'978-131415', stock:2, description:'Materi kalkulus untuk tingkat lanjut.', cover:'https://images.unsplash.com/photo-1589998059171-988d887df646?w-200&fit=crop'}
+      ];
+      saveAll();
+    }
+  }
+
+  /* ---------- Init ---------- */
+  (function init(){
+    loadAll();
+    seedIfEmpty();
+    // set default date only once on load (keamanan)
+    borrowDateInput.value = new Date().toISOString().split('T')[0];
+    renderBooks();
+  })();
+
+  /* Close modals when clicking outside content */
+  window.addEventListener('click', e => {
+    if(e.target.id === 'modal') closeModal();
+    if(e.target.id === 'detailModal') closeDetailModal();
+  });
+
+  function logout() {
+  // Jika kamu punya data login di localStorage, hapus di sini
+  localStorage.removeItem("loggedUser");
+
+  // Bisa juga hapus seluruh localStorage (jika ingin bersih total)
+  // localStorage.clear();
+
+  alert("Anda telah logout.");
+  window.location.href = "index.html"; // ganti ke halaman login kamu
+}
+
+
+</script>
+<!-- Tombol Logout -->
+<div class="logout-btn" onclick="logout()">
+  <i class="fas fa-sign-out-alt"></i> Logout
+</div>
+
+</body>
+</html>
